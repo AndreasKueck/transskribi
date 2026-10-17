@@ -1,4 +1,4 @@
-# Transskribi sonon venantan de krozila langeto per AI
+# Transskribi per AI sonon venantan de krozila langeto
 
 Estas prezentata Tampermonkey-skripto, por transskribi per la OpenAI-API sonon venantan de krozila langeto.
 Jen ekranfoto ilustranta aplikon:
