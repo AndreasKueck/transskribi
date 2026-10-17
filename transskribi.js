@@ -244,7 +244,7 @@ Uzu naturan interpunkcion.
 
     const titolo = kreiElementon(
         'summary',
-        'transskribo'
+        'Transskribo'
     );
 
     const enhavo = kreiElementon('div', '', 'enhavo');
@@ -374,9 +374,9 @@ Uzu naturan interpunkcion.
         const formularo = new FormData();
 
         formularo.append('file', peco.sondosiero, 'sono.wav');
-        formularo.append('model', transskRIBA_MODELO);
+        formularo.append('model', TRANSSKRIBA_MODELO);
         formularo.append('response_format', 'json');
-        formularo.append('prompt', transskRIBA_PROMPTO);
+        formularo.append('prompt', TRANSSKRIBA_PROMPTO);
 
         // Sen eksplicita lingvokodo la modelo povas rekoni aliajn lingvojn.
         // La Esperanto-prefero estas donita per la prompto.
@@ -743,7 +743,7 @@ Uzu naturan interpunkcion.
 
                 if (sesio.nuligita || nunaSesio !== sesio) return;
 
-                if (transskRIBO_EN_H_SKRIBO) {
+                if (TRANSSKRIBO_EN_H_SKRIBO) {
                     teksto = alHSkribo(teksto);
                 }
 
