@@ -1,6 +1,10 @@
 # Transskribi sonon venantan de krozila langeto per AI
 
 Estas prezentata Tampermonkey-skripto, por transskribi per la OpenAI-API sonon venantan de krozila langeto.
+Jen ekranfoto ilustranta aplikon:
+
+<img width="1882" height="936" alt="ekranfototransskribo" src="https://github.com/user-attachments/assets/eda314b3-536f-49df-9aa5-ff97b8466ff2" />
+
 
 ## Instalado
 
