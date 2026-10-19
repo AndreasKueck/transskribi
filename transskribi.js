@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Transskribi langetan sonon
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  Transskribas la sonon de elektita retumila langeto; Esperanto estas la defaulta lingva supozo. Kun rezerva sonprilaborilo.
 // @match        https://*/*
 // @run-at       document-idle
@@ -28,6 +28,7 @@
     const TRANSSKRIBA_MODELO = 'gpt-transcribe';
 
     const PECO_DAURO_SEKUNDOJ = 12;
+    const INTERKOVRO_SEKUNDOJ = 3;
     const MAKSIMUMA_ATENDOVICO = 6;
     const PETO_TEMPOLIMO_MS = 120000;
 
@@ -685,50 +686,82 @@ Uzu naturan interpunkcion.
         montriProgreson(sesio);
     }
 
-    function envicigiPecon(sesio) {
-        if (!sesio.pecaLongo || sesio.nuligita) return;
+function envicigiPecon(sesio) {
+    if (!sesio.pecaLongo || sesio.nuligita) return;
 
-        const specimenoj = sesio.pecaBufro.subarray(0, sesio.pecaLongo);
-        const komenco =
-            (sesio.sumaSpecimeno - sesio.pecaLongo) /
-            sesio.specimenaRapido;
+    // Nur la nove kaptitaj specimenoj.
+    const novaLongo = sesio.pecaLongo;
+    const novajSpecimenoj = sesio.pecaBufro.subarray(0, novaLongo);
 
-        const fino =
-            sesio.sumaSpecimeno / sesio.specimenaRapido;
+    // La fino de la antaua peco donas kuntekston.
+    const antauaVosto = sesio.antauaVosto;
+    const specimenoj = new Float32Array(
+        antauaVosto.length + novaLongo
+    );
 
-        let kvadrataSumo = 0;
+    specimenoj.set(antauaVosto, 0);
+    specimenoj.set(novajSpecimenoj, antauaVosto.length);
 
-        for (const valoro of specimenoj) {
-            kvadrataSumo += valoro * valoro;
-        }
+    // La tempindikoj rilatas al la tuta sendata sondosiero,
+    // inkluzive de la interkovro.
+    const komenco =
+        (sesio.sumaSpecimeno - specimenoj.length) /
+        sesio.specimenaRapido;
 
-        const forto = Math.sqrt(kvadrataSumo / specimenoj.length);
+    const fino =
+        sesio.sumaSpecimeno / sesio.specimenaRapido;
 
-        sesio.pecaLongo = 0;
+    // Konservu propran kopion: pecaBufro estos reuzata.
+    const vostaLongo = Math.min(
+        novaLongo,
+        Math.round(
+            INTERKOVRO_SEKUNDOJ * sesio.specimenaRapido
+        )
+    );
 
-        if (forto < SILENTA_SOJLO) return;
+    sesio.antauaVosto = novajSpecimenoj.slice(
+        novaLongo - vostaLongo
+    );
 
-        if (sesio.atendovico.length >= MAKSIMUMA_ATENDOVICO) {
-            malsukcesi(
-                sesio,
-                new Error(
-                    'La transskribado estas tro malrapida. ' +
-                    'La atendovico plenighis; la kaptado estis haltigita. ' +
-                    'Jam montrita teksto estas konservita.'
-                )
-            );
-            return;
-        }
+    sesio.pecaLongo = 0;
 
-        // kreiWav tuj kopias la specimenojn.
-        sesio.atendovico.push({
-            komenco,
-            fino,
-            sondosiero: kreiWav(specimenoj, sesio.specimenaRapido)
-        });
+    // Kontrolu la tutan sondosieron, inkluzive de la vosto.
+    // Tiel parolfino antau silento ankorau povas esti rekonita.
+    let kvadrataSumo = 0;
 
-        void prilaboriAtendovicon(sesio);
+    for (const valoro of specimenoj) {
+        kvadrataSumo += valoro * valoro;
     }
+
+    const forto = Math.sqrt(
+        kvadrataSumo / specimenoj.length
+    );
+
+    if (forto < SILENTA_SOJLO) return;
+
+    if (sesio.atendovico.length >= MAKSIMUMA_ATENDOVICO) {
+        malsukcesi(
+            sesio,
+            new Error(
+                'La transskribado estas tro malrapida. ' +
+                'La atendovico plenighis; la kaptado estis haltigita. ' +
+                'Jam montrita teksto estas konservita.'
+            )
+        );
+        return;
+    }
+
+    sesio.atendovico.push({
+        komenco,
+        fino,
+        sondosiero: kreiWav(
+            specimenoj,
+            sesio.specimenaRapido
+        )
+    });
+
+    void prilaboriAtendovicon(sesio);
+}
 
     async function prilaboriAtendovicon(sesio) {
         if (sesio.laboras || sesio.nuligita) return;
@@ -946,7 +979,11 @@ Uzu naturan interpunkcion.
             specimenaRapido: 24000,
             pecaBufro: null,
             pecaLongo: 0,
-            konfirmiHalton: null
+            konfirmiHalton: null,
+            pecaBufro: null,
+	    pecaLongo: 0,
+	    antauaVosto: new Float32Array(0),
+	    konfirmiHalton: null
         };
 
         nunaSesio = sesio;
